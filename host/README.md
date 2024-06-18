@@ -17,3 +17,15 @@ as a linux input code, instead of using a map.
 2) Compress it with zstd newtonkbd.ko to get the newtonkbd.ko.zst
 3) Move it to /usr/lib/modules/($uname -r)/kernel/drivers/input/keyboard/
 
+
+Note: connecting the keyboard MCU through the USB is easy, as it will appear
+in the host as ttyUSB or something similar. But when the MCU is wired to other
+UART pins in the board, it is not straight forward how the host would recognize
+the serial port.
+
+```
+# cat /proc/tty/driver/serial
+```
+shows what is connected to the ttyS0 to S3 that corresponds to COM1 to COM4.
+
+
