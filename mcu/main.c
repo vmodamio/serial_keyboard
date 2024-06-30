@@ -4,9 +4,9 @@
 #include "hal.h"
 #include "input-event-codes.h"
 
-#define TKEY0  1LL<<4
-#define TKEY1  1LL<<60
-#define TKEY2  1LL<<61
+#define TKEY0  4
+#define TKEY1  60
+#define TKEY2  61
 
 static uint8_t keycode[256] = { \
      KEY_ESC, KEY_TAB, KEY_CAPSLOCK, KEY_LEFTSHIFT, KEY_TYPE, KEY_MINUS, KEY_A, KEY_Q, KEY_1, \
@@ -47,7 +47,7 @@ static uint8_t keycode[256] = { \
 uint32_t SystemCoreClock;  // Required by CMSIS. Holds system core cock value
 void SystemInit(void) {    // Called automatically by startup code
   clock_init();            // Sets SystemCoreClock
-  //stop2_init();
+  stop2_init();
 }
 
 static volatile uint64_t s_ticks;  // Milliseconds since boot
@@ -57,14 +57,10 @@ void SysTick_Handler(void) {       // SyStick IRQ handler, triggered every 1ms
 }
 
 static volatile uint8_t pendingkey;  
-static volatile uint8_t bouncing; // global bouncing   
 static volatile uint8_t coln; // holds the column that triggered
 static volatile uint8_t keyn; // holds the key that triggered
 static volatile uint8_t keymod; // holds the layer offset
 static volatile uint8_t keylock; // holds the key locks
-static volatile uint16_t rowscan; // holds the status of the NROWS rows in the active coln
-static volatile uint64_t keydown; // holds the status of the 62 keys   
-volatile uint8_t rowkeystatus[NROWS]; // holds the status of the NROWS rows in the active coln
 volatile uint8_t keyboard[NROWS*NCOLS]; // holds the status of the NROWS rows in the active coln
 static volatile uint8_t restore;  
 static volatile uint8_t sendkey;  
@@ -72,7 +68,6 @@ static volatile uint8_t sendkey;
 void TIM2_IRQHandler(void) {
    if (TIM2->SR & (1<<0)) {
      TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
-     bouncing = 0;
      pendingkey = 0;
      //EXTI->IMR1 |= (1 << 0); // re-enable the EXTI interrupt, HERE: need to map to the coln EXTI
      TIM2->CR1 &= ~(1<<0);    // Disable timer
@@ -80,14 +75,14 @@ void TIM2_IRQHandler(void) {
 }
 
 void kbd_layer(void) {
-    if (keydown & TKEY0) {
+    if (keyboard[TKEY0]>>7) {
       keymod = 64;  // Layer-1: While holding TKEY0
       keylock = 0;
-      if (keydown & TKEY1) {
+      if (keyboard[TKEY1]>>7) {
         keymod = 128;  // Layer-2: Once TKEY0+TKEY1
         keylock = 1;
       }
-      else if (keydown & TKEY2) {
+      else if (keyboard[TKEY2]>>7) {
         keymod = 192;  // Layer-3: Once TKEY0+TKEY2
         keylock = 2;
       }
@@ -101,15 +96,11 @@ void col_IRQ(uint8_t col) {
     //startkbd();
     if (pendingkey == 0) {
       pendingkey = 1;
-      bouncing = 1;
       coln = col;
       set_triggers(0);
       TIM2->CNT = 0; 
       TIM2->CR1 |= (1<<0);    // Enable timer
       set_all_rows(0);
-      //for (int m=0; m<NROWS; m++) {
-      //    rowkeystatus[m] = ( keydown & (1ULL<<(NROWS*coln +m)))? 0xFF : 0x00;  // bits history
-      //}
     }
 }
 
@@ -166,16 +157,13 @@ int main(void) {
   pendingkey = 0;
   sendkey = 0;
   restore = 0;
-  bouncing = 0;
-  keydown = 0;
-  rowscan = 0;
   coln = 0;
   keymod = 0;
   keylock = 0;
 
+  // Initialize the keyboard matrix
   for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = 0x00;  
 
-  //keyn = 0xFF; // means no key actuated
   set_triggers(1);
   //while (s_ticks < 10000) spin(1);
   
@@ -192,7 +180,6 @@ int main(void) {
 	                         gpio_read(COLS[coln]) ;
 	       if (keyboard[keyn] == Hmask) {
 	           keyboard[keyn] = 0x00;
-		   //keydown &= ~(1<< keyn);
 		   pendingkey = 0;
 		   sendkey = 1;
                    //uart_write_buf(UART_DEBUG, "o] ",3 );
@@ -200,7 +187,6 @@ int main(void) {
 	       }
 	       else if (keyboard[keyn] == Lmask) {
 	           keyboard[keyn] = 0xFF;
-		   //keydown |= (1<< keyn);
 		   pendingkey = 0;
 		   sendkey = 1;
                    //uart_write_buf(UART_DEBUG, "[x",2 );
@@ -215,25 +201,28 @@ int main(void) {
                else uart_write_byte(UART_DEBUG, keycode[keyn+keymod] + 128*(keyboard[keyn]>>7));
                //////else uart_write_byte(USART1, keycode[keyn+keymod] + 128*((keydown & (1<<keyn)) >> keyn));
                sendkey = 0; 
-	       //pendingkey = 0;
            }
        }
        else spin(1);
-    restore = 1;
+    //restore = 1;  // this only necessary when no stopkbd, because the loop will spin,
+		  // if the mcu goes to stop there is no need, because the code below will
+		  // run only once and then STOP, and the main loop wont trigger until there is another
+		  // pending flag set.
     }
-    if (restore) {
-        restore = 0;
+    //if (restore) {
+        //restore = 0;
         set_all_rows(1);
         for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
         spin(8);
         set_triggers(1);
-    }
-    spin(1);
+    //}
+    //spin(1);
     //set_all_rows(1);
     //spin(8);
     //set_triggers(1);
     //uart_write_buf(UART_DEBUG, "Entering STOP2 mode", 19);
-    //stopkbd();
+    TIM2->CR1 &= ~(1<<0);    // Disable timer
+    stopkbd();
   }  
   return 0;
 }
