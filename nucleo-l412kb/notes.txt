@@ -1,0 +1,26 @@
+Now running at 2.3 mA in RUN mode, but merely 290 uA in STOP2 mode.
+I still can check to reconfigure all non used gpios as input floats, 
+disable cleck in gpios from the outputs (and leave only the inputs).
+
+Also, check which features do I need or I can remove, 
+as the flash acceleration ACR,
+if using or not the DMA,
+how many things the VDD populates, 
+disable FPU,
+disable systicks,
+
+
+Also, the microcontroller runs in STOP2 mode all time, even with
+key holded. So its worth to optimize the STOP2 features and not 
+bother too much with the Run features.
+
+Check the LPUSART, is it worth to use it? or normal USART.
+
+
+FLASH_ACR_LATENCY_4WS 
+See manual RM0394: pag 79. For 16MHz in Vcore range 1, the Latency should be 0-wait-states!!!
+And in the program is set to 4WS!!! probably because was set when using the PLL clock at 80MHz
+With ART accelerator, the flash can be accessed with zero-WS even when the number of latency WS
+is bigger than 1.
+Maybe, for 16MHz, I can disable the prefetch bit PRFTEN, as the latency could be directly set to ZERO.
+
