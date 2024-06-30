@@ -24,9 +24,6 @@
  
  */
 
-#ifndef LED_PIN
-#define LED_PIN PIN('B', 3)  // Green onboard LED on Nucleo-L432KC
-#endif
 
 #define DEBOUNCE_MS 32  // LED blinking period in millis
 // Keyboard matrix with 9 rows x 7 cols (mapping 62keys out of 63)
@@ -114,15 +111,6 @@ static inline void gpio_write(uint16_t pin, bool val) {
   gpio->BSRR = BIT(PINNO(pin)) << (val ? 0 : 16);
 }
 
-static inline void cycle_to_row(uint16_t pin) {
-  GPIO(0)->BSRR = PINBANK(pin) ? ( ROWSA << 16 ): ( ( ROWSA<<16 ) | BIT(PINNO(pin))) ; 
-  GPIO(1)->BSRR = PINBANK(pin) ? ( ( ROWSB<<16 ) | BIT(PINNO(pin)) ) : ( ROWSB << 16 ); 
-  //GPIO(0)->ODR = PINBANK(pin) ? 0 :  BIT(PINNO(pin)) ; 
-  //GPIO(1)->ODR = PINBANK(pin) ? BIT(PINNO(pin)) : 0; 
-  //spin(8);
-  //while ( !(GPIO(PINBANK(pin))->ODR & BIT(PINNO(pin)) ) ) spin(1); 
-}
-
 static inline void gpio_init(uint16_t pin, uint8_t mode, uint8_t type,
                              uint8_t speed, uint8_t pull, uint8_t af) {
   GPIO_TypeDef *gpio = gpio_bank(pin);
@@ -142,15 +130,6 @@ static inline void gpio_input(uint16_t pin) {
 static inline void gpio_output(uint16_t pin) {
   gpio_init(pin, GPIO_MODE_OUTPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_HIGH,
             GPIO_PULL_NONE, 0);
-}
-
-static inline void col_discharge(uint16_t pin) {
-  gpio_init(pin, GPIO_MODE_OUTPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE, 0);
-  GPIO_TypeDef *gpio = gpio_bank(pin);
-  gpio->ODR = 0;
-  spin(2);
-  gpio_init(pin, GPIO_MODE_INPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_DOWN, 0);
-  spin(2);
 }
 
 static inline void gpio_matrix_init(void) {
@@ -345,10 +324,8 @@ static inline void stopkbd(void) {
   RCC->CFGR |= (RCC_CFGR_SW_HSI);
   while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) spin(1);
 
-  RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;  // re-enable USART2
-  USART2->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
-  //RCC->APB2ENR |= RCC_APB2ENR_USART1EN;  // re-enable USART2
-  //USART1->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
+  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;  // re-enable USART2
+  USART1->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
   RCC->APB1ENR1 |= (1<<0); // Enable clock for TIM2
   RCC->AHB2ENR |= 3;  // enable GPIO clocks for bit 0 and 1 (A and B banks)
   SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;        

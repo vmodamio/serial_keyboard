@@ -145,13 +145,11 @@ void EXTI9_5_IRQHandler(void) {
 }
 
 int main(void) {
-  gpio_output(LED_PIN);
   gpio_matrix_init();
   set_all_rows(1);
   col_trigger_init();
 
-  uart_init(UART_DEBUG, 115200);
-  //uart_init(USART1, 115200);
+  uart_init(USART1, 115200);
   init_debouncer();
 
   pendingkey = 0;
@@ -196,31 +194,17 @@ int main(void) {
            }
 	   
            if (sendkey) {
-               gpio_write(LED_PIN, (keyboard[keyn]) >> 7 );
                if (keycode[keyn]>>7) kbd_layer(); // process special KEY
-               else uart_write_byte(UART_DEBUG, keycode[keyn+keymod] + 128*(keyboard[keyn]>>7));
-               //////else uart_write_byte(USART1, keycode[keyn+keymod] + 128*((keydown & (1<<keyn)) >> keyn));
+               else uart_write_byte(USART1, keycode[keyn+keymod] + 128*(keyboard[keyn]>>7));
                sendkey = 0; 
            }
        }
        else spin(1);
-    //restore = 1;  // this only necessary when no stopkbd, because the loop will spin,
-		  // if the mcu goes to stop there is no need, because the code below will
-		  // run only once and then STOP, and the main loop wont trigger until there is another
-		  // pending flag set.
     }
-    //if (restore) {
-        //restore = 0;
-        set_all_rows(1);
-        for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
-        spin(8);
-        set_triggers(1);
-    //}
-    //spin(1);
-    //set_all_rows(1);
-    //spin(8);
-    //set_triggers(1);
-    //uart_write_buf(UART_DEBUG, "Entering STOP2 mode", 19);
+    set_all_rows(1);
+    for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
+    spin(8);
+    set_triggers(1);
     TIM2->CR1 &= ~(1<<0);    // Disable timer
     stopkbd();
   }  
