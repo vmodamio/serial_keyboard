@@ -69,8 +69,8 @@
 static const uint16_t ROWS[NROWS] = {ROW0_PIN, ROW1_PIN, ROW2_PIN, ROW3_PIN, ROW4_PIN, \
                                ROW5_PIN, ROW6_PIN, ROW7_PIN, ROW8_PIN};
 
-static const uint16_t COLS[NCOLS] = {COL0_PIN, COL1_PIN, COL2_PIN, COL3_PIN, COL4_PIN, \
-                               COL5_PIN, COL6_PIN};
+static const uint16_t COLS[NCOLS] = {COL6_PIN, COL5_PIN, COL4_PIN, COL3_PIN, COL2_PIN, \
+                               COL1_PIN, COL0_PIN};
 
 static const uint8_t Hmask = 0b10000000;  // holds the key status
 static const uint8_t Lmask = 0b01111111;  // holds the history

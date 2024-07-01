@@ -108,19 +108,19 @@ void col_IRQ(uint8_t col) {
 void EXTI0_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 0)) {
     EXTI->PR1 |= (1 << 0);
-    col_IRQ(0);
+    col_IRQ(6);
   }
 }
 void EXTI1_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 1)) {
     EXTI->PR1 |= (1 << 1);
-    col_IRQ(1);
+    col_IRQ(5);
   }
 }
 void EXTI3_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 3)) {
     EXTI->PR1 |= (1 << 3);
-    col_IRQ(2);
+    col_IRQ(4);
   }
 }
 void EXTI4_IRQHandler(void) {
@@ -132,15 +132,15 @@ void EXTI4_IRQHandler(void) {
 void EXTI9_5_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 5)) {
     EXTI->PR1 |= (1 << 5);
-    col_IRQ(4);
+    col_IRQ(2);
   }
   else if (EXTI->PR1 & (1 << 6)) {
     EXTI->PR1 |= (1 << 6);
-    col_IRQ(5);
+    col_IRQ(1);
   }
   else if (EXTI->PR1 & (1 << 7)) {
     EXTI->PR1 |= (1 << 7);
-    col_IRQ(6);
+    col_IRQ(0);
   }
 }
 
