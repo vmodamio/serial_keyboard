@@ -166,7 +166,7 @@ int main(void) {
 
   set_triggers(1);
   //while (s_ticks < 10000) spin(1);
-  uart_write_buf(UART_DEBUG, "Init ",5 );
+  uart_write_buf(USART1, "Init ",5 );
   
   while (1) {
     while (scanning) {   // expires in 32ms because of TIM2
@@ -185,13 +185,13 @@ int main(void) {
 		       keydown &= ~( 1<< keyn);
 	               scanning = keydown ? 1 : 0;
 	               sendkey = 1;
-                       uart_write_buf(UART_DEBUG, "o] ",3 );
+                       uart_write_buf(USART1, "o] ",3 );
 	           }
 	           else if (keyboard[keyn] == Lmask) {
 	               keyboard[keyn] = 0xFF;
 		       keydown |= ( 1<< keyn);
 	               sendkey = 1;
-                       uart_write_buf(UART_DEBUG, "[x",2 );
+                       uart_write_buf(USART1, "[x",2 );
 	           }
 	       }
 	       gpio_write(ROWS[m], 0);
