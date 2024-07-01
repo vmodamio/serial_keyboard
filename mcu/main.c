@@ -56,19 +56,20 @@ void SysTick_Handler(void) {       // SyStick IRQ handler, triggered every 1ms
   s_ticks++;
 }
 
-static volatile uint8_t pendingkey;  
+static volatile uint8_t scanning;  
 static volatile uint8_t coln; // holds the column that triggered
 static volatile uint8_t keyn; // holds the key that triggered
 static volatile uint8_t keymod; // holds the layer offset
 static volatile uint8_t keylock; // holds the key locks
 volatile uint8_t keyboard[NROWS*NCOLS]; // holds the status of the NROWS rows in the active coln
+static volatile uint64_t keydown; // holds the key locks
 static volatile uint8_t restore;  
 static volatile uint8_t sendkey;  
 
 void TIM2_IRQHandler(void) {
    if (TIM2->SR & (1<<0)) {
      TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
-     pendingkey = 0;
+     //scanning = 0;
      //EXTI->IMR1 |= (1 << 0); // re-enable the EXTI interrupt, HERE: need to map to the coln EXTI
      TIM2->CR1 &= ~(1<<0);    // Disable timer
    }
@@ -94,8 +95,8 @@ void kbd_layer(void) {
 
 void col_IRQ(uint8_t col) {
     //startkbd();
-    if (pendingkey == 0) {
-      pendingkey = 1;
+    if (scanning == 0) {
+      scanning = 1;
       coln = col;
       set_triggers(0);
       TIM2->CNT = 0; 
@@ -152,7 +153,7 @@ int main(void) {
   uart_init(USART1, 115200);
   init_debouncer();
 
-  pendingkey = 0;
+  scanning = 0;
   sendkey = 0;
   restore = 0;
   coln = 0;
@@ -161,41 +162,44 @@ int main(void) {
 
   // Initialize the keyboard matrix
   for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = 0x00;  
+  keydown = 0;
 
   set_triggers(1);
   //while (s_ticks < 10000) spin(1);
+  uart_write_buf(UART_DEBUG, "Init ",5 );
   
   while (1) {
-    while (pendingkey) {   // expires in 32ms because of TIM2
+    while (scanning) {   // expires in 32ms because of TIM2
        if (s_ticks > tick_init) {
 	   //set_all_rows(0); //already in the interrupt
            tick_init = s_ticks;
            for (int m=0 ; m < NROWS ; m++) {
 	       gpio_write(ROWS[m], 1);
-	       keyn = NROWS*coln +m;
-               keyboard[keyn] = (keyboard[keyn] & Hmask) |
-	                         ((keyboard[keyn] <<1 ) & Lmask) | 
-	                         gpio_read(COLS[coln]) ;
-	       if (keyboard[keyn] == Hmask) {
-	           keyboard[keyn] = 0x00;
-		   pendingkey = 0;
-		   sendkey = 1;
-                   //uart_write_buf(UART_DEBUG, "o] ",3 );
-		   break;
-	       }
-	       else if (keyboard[keyn] == Lmask) {
-	           keyboard[keyn] = 0xFF;
-		   pendingkey = 0;
-		   sendkey = 1;
-                   //uart_write_buf(UART_DEBUG, "[x",2 );
-		   break;
+	       for (int k=0; k < NCOLS ; k++) {
+	           keyn = NROWS*k +m;
+                   keyboard[keyn] = (keyboard[keyn] & Hmask) |
+	                             ((keyboard[keyn] <<1 ) & Lmask) | 
+	                             gpio_read(COLS[k]) ;
+	           if (keyboard[keyn] == Hmask) {
+	               keyboard[keyn] = 0x00;
+		       keydown &= ~( 1<< keyn);
+	               scanning = keydown ? 1 : 0;
+	               sendkey = 1;
+                       uart_write_buf(UART_DEBUG, "o] ",3 );
+	           }
+	           else if (keyboard[keyn] == Lmask) {
+	               keyboard[keyn] = 0xFF;
+		       keydown |= ( 1<< keyn);
+	               sendkey = 1;
+                       uart_write_buf(UART_DEBUG, "[x",2 );
+	           }
 	       }
 	       gpio_write(ROWS[m], 0);
            }
 	   
            if (sendkey) {
                if (keycode[keyn]>>7) kbd_layer(); // process special KEY
-               else uart_write_byte(USART1, keycode[keyn+keymod] + 128*(keyboard[keyn]>>7));
+               //else uart_write_byte(USART1, keycode[keyn+keymod] + 128*(keyboard[keyn]>>7));
                sendkey = 0; 
            }
        }
