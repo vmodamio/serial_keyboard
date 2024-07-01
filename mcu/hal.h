@@ -30,15 +30,15 @@
 #define NCOLS 7  // Cols low. Pins with diode cathode exiting
 #define NROWS 9  // Rows high 
 #define ROWMASK (1<<NROWS)-1
-#define ROW0_PIN PIN('A', 12) 
-#define ROW1_PIN PIN('B', 0)  // first key
-#define ROW2_PIN PIN('B', 7)  
-#define ROW3_PIN PIN('B', 6)  
-#define ROW4_PIN PIN('B', 1)  
-#define ROW5_PIN PIN('A', 8)  
-#define ROW6_PIN PIN('A', 11) 
-#define ROW7_PIN PIN('B', 5)  
-#define ROW8_PIN PIN('B', 4)  
+#define ROW8_PIN PIN('A', 12) 
+#define ROW0_PIN PIN('B', 0)  // first key
+#define ROW1_PIN PIN('B', 7)  
+#define ROW7_PIN PIN('B', 6)  
+#define ROW2_PIN PIN('B', 1)  
+#define ROW6_PIN PIN('A', 8)  
+#define ROW3_PIN PIN('A', 11) 
+#define ROW5_PIN PIN('B', 5)  
+#define ROW4_PIN PIN('B', 4)  
 
 #define COL0_PIN PIN('A', 0)  // first key
 #define COL1_PIN PIN('A', 1)  
