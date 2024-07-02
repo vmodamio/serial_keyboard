@@ -57,23 +57,21 @@ void SysTick_Handler(void) {       // SyStick IRQ handler, triggered every 1ms
 }
 
 static volatile uint8_t scanning;  
-static volatile uint8_t coln; // holds the column that triggered
+static volatile uint8_t setready;  
 static volatile uint8_t keyn; // holds the key that triggered
 static volatile uint8_t keymod; // holds the layer offset
 static volatile uint8_t keylock; // holds the key locks
-volatile uint8_t keyboard[NROWS*NCOLS]; // holds the status of the NROWS rows in the active coln
+volatile uint8_t keyboard[NROWS*NCOLS]; // holds the status of the keyboard
 static volatile uint64_t keydown; // holds the key locks
-static volatile uint8_t restore;  
-static volatile uint8_t sendkey;  
 
-void TIM2_IRQHandler(void) {
-   if (TIM2->SR & (1<<0)) {
-     TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
-     //scanning = 0;
-     //EXTI->IMR1 |= (1 << 0); // re-enable the EXTI interrupt, HERE: need to map to the coln EXTI
-     TIM2->CR1 &= ~(1<<0);    // Disable timer
-   }
-}
+//void TIM2_IRQHandler(void) {
+//   if (TIM2->SR & (1<<0)) {
+//     TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
+//     //scanning = 0;
+//     //EXTI->IMR1 |= (1 << 0); // re-enable the EXTI interrupt, HERE: need to map to the coln EXTI
+//     TIM2->CR1 &= ~(1<<0);    // Disable timer
+//   }
+//}
 
 void kbd_layer(void) {
     if (keyboard[TKEY0]>>7) {
@@ -93,14 +91,12 @@ void kbd_layer(void) {
     }
 }
 
-void col_IRQ(uint8_t col) {
-    //startkbd();
+void col_IRQ(void) {
     if (scanning == 0) {
       scanning = 1;
-      coln = col;
       set_triggers(0);
-      TIM2->CNT = 0; 
-      TIM2->CR1 |= (1<<0);    // Enable timer
+      //TIM2->CNT = 0; 
+      //TIM2->CR1 |= (1<<0);    // Enable timer
       set_all_rows(0);
     }
 }
@@ -109,39 +105,46 @@ void col_IRQ(uint8_t col) {
 void EXTI0_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 0)) {
     EXTI->PR1 |= (1 << 0);
-    col_IRQ(6);
+    //col_IRQ(6);
+    col_IRQ();
   }
 }
 void EXTI1_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 1)) {
     EXTI->PR1 |= (1 << 1);
-    col_IRQ(5);
+    //col_IRQ(5);
+    col_IRQ();
   }
 }
 void EXTI3_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 3)) {
     EXTI->PR1 |= (1 << 3);
-    col_IRQ(4);
+    //col_IRQ(4);
+    col_IRQ();
   }
 }
 void EXTI4_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 4)) {
     EXTI->PR1 |= (1 << 4);
-    col_IRQ(3);
+    //col_IRQ(3);
+    col_IRQ();
   }
 }
 void EXTI9_5_IRQHandler(void) {
   if (EXTI->PR1 & (1 << 5)) {
     EXTI->PR1 |= (1 << 5);
-    col_IRQ(2);
+    //col_IRQ(2);
+    col_IRQ();
   }
   else if (EXTI->PR1 & (1 << 6)) {
     EXTI->PR1 |= (1 << 6);
-    col_IRQ(1);
+    //col_IRQ(1);
+    col_IRQ();
   }
   else if (EXTI->PR1 & (1 << 7)) {
     EXTI->PR1 |= (1 << 7);
-    col_IRQ(0);
+    //col_IRQ(0);
+    col_IRQ();
   }
 }
 
@@ -151,12 +154,10 @@ int main(void) {
   col_trigger_init();
 
   uart_init(USART1, 115200);
-  init_debouncer();
+  //init_debouncer();
 
   scanning = 0;
-  sendkey = 0;
-  restore = 0;
-  coln = 0;
+  setready = 0;
   keymod = 0;
   keylock = 0;
 
@@ -184,33 +185,37 @@ int main(void) {
 	               keyboard[keyn] = 0x00;
 		       keydown &= ~( 1<< keyn);
 	               scanning = keydown ? 1 : 0;
-	               sendkey = 1;
-                       uart_write_buf(USART1, "o] ",3 );
+		       setready = 1;
+                       if (keycode[keyn]>>7) kbd_layer(); // process special KEY
+		       else uart_write_byte(USART1, keycode[keyn+keymod] );
+                       //uart_write_buf(USART1, "o] ",3 );
 	           }
 	           else if (keyboard[keyn] == Lmask) {
 	               keyboard[keyn] = 0xFF;
 		       keydown |= ( 1<< keyn);
-	               sendkey = 1;
-                       uart_write_buf(USART1, "[x",2 );
+                       if (keycode[keyn]>>7) kbd_layer(); // process special KEY
+		       else uart_write_byte(USART1, keycode[keyn+keymod] + 128);
+                       //uart_write_buf(USART1, "[x",2 );
 	           }
 	       }
 	       gpio_write(ROWS[m], 0);
            }
 	   
-           if (sendkey) {
-               if (keycode[keyn]>>7) kbd_layer(); // process special KEY
-               //else uart_write_byte(USART1, keycode[keyn+keymod] + 128*(keyboard[keyn]>>7));
-               sendkey = 0; 
-           }
        }
        else spin(1);
     }
-    set_all_rows(1);
-    for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
-    spin(8);
-    set_triggers(1);
-    TIM2->CR1 &= ~(1<<0);    // Disable timer
-    stopkbd();
+
+    if (setready) {
+        set_all_rows(1);
+        for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
+        spin(8);
+        set_triggers(1);
+        //TIM2->CR1 &= ~(1<<0);    // Disable timer
+	setready = 0;
+    }
+
+    if ((USART1->ISR & BIT(6)) == 0) stopkbd();
+    else spin(1);
   }  
   return 0;
 }

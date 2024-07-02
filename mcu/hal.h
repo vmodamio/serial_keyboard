@@ -326,7 +326,7 @@ static inline void stopkbd(void) {
 
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;  // re-enable USART2
   USART1->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
-  RCC->APB1ENR1 |= (1<<0); // Enable clock for TIM2
+  //RCC->APB1ENR1 |= (1<<0); // Enable clock for TIM2
   RCC->AHB2ENR |= 3;  // enable GPIO clocks for bit 0 and 1 (A and B banks)
   SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;        
   SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
