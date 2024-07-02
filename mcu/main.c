@@ -214,8 +214,8 @@ int main(void) {
 	setready = 0;
     }
 
-    if ((USART1->ISR & BIT(6)) == 0) stopkbd();
-    else spin(1);
+    if ((USART1->ISR & BIT(6)) == 0) spin(1);
+    else stopkbd();
   }  
   return 0;
 }
