@@ -16,6 +16,8 @@ as a linux input code, instead of using a map.
 1) Compile it as kernel module
 2) Compress it with zstd newtonkbd.ko to get the newtonkbd.ko.zst
 3) Move it to /usr/lib/modules/($uname -r)/kernel/drivers/input/keyboard/
+4) Then run: sudo depmod  (if the module is new, to recreate the 
+   module dependency list.
 
 
 Note: connecting the keyboard MCU through the USB is easy, as it will appear
