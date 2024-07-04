@@ -1,0 +1,38 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Keyboard UART3-M1";
+		compatible = "radxa,rock-s0";
+		category = "misc";
+		exclusive = "GPOI0_C2", "GPOI0_C1", "pwm5", "pwm6";
+		description = "Enable UART3-M1.
+On Radxa ROCK S0 this RX pin 15 & TX pin 33.";
+	};
+};
+
+
+// Include headers from radxa-s0-ext-antenna.dts
+// so we can use human readable names for GPIOs
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+
+&uart3 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3m1_xfer>;
+
+        type_dev: type-dev@0{
+                compatible = "serdev_keyboard, typedev";
+                pinctrl-names = "default";
+        };
+};
+
+&pwm5 {
+	status = "disabled";
+};
+
+&pwm6 {
+	status = "disabled";
+};
