@@ -1,0 +1,38 @@
+/dts-v1/;
+
+/ {
+	compatible = "rockchip,rk3308";
+
+	fragment@0 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@1 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <0xffffffff>;
+		};
+	};
+
+	__fixups__ {
+		i2c3 = "/fragment@0:target:0";
+		spi1 = "/fragment@1:target:0";
+		uart3 = "/fragment@2:target:0";
+		uart3_xfer = "/fragment@2/__overlay__:pinctrl-0:0";
+	};
+};
