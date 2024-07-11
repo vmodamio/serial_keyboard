@@ -3,34 +3,31 @@
 
 / {
 	metadata {
-		title = "Serdev_keyboard UART3-M1";
-		compatible = "radxa,rock-s0";
+		title = "serdev UART1";
+		compatible = "radxa,rockpis", "radxa,rock-s0";
 		category = "misc";
-		exclusive = "GPOI0_C2", "GPOI0_C1", "pwm5", "pwm6";
-		description = "Enable UART3-M1.
-On Radxa ROCK S0 this RX pin 15 & TX pin 33.";
+		exclusive = "GPIO1_D0", "GPIO1_D1", "i2c0", "spi2";
+		description = "Enable UART1.
+On ROCK PI S this is TX pin 24 & RX pin 23.
+On ROCK S0 this is TX pin 24 & RX pin 23.";
 	};
 };
 
-
-&uart3 {
+&uart1 {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&uart3m1_xfer>;
-
+	pinctrl-0 = <&uart1_xfer>;
         type_dev: type-dev@0{
-		status = "okay";
-                compatible = "serdev_keyboard";
+                status = "okay";
+                compatible = "typewriter_keyboard";
                 pinctrl-names = "default";
-                pinctrl-0 = <&uart3m1_xfer>;
         };
 };
 
-&pwm5 {
+&spi2 {
 	status = "disabled";
 };
 
-&pwm6 {
+&i2c0 {
 	status = "disabled";
 };
-
