@@ -218,7 +218,7 @@ static inline bool uart_init(USART_TypeDef *uart, unsigned long baud) {
 }
 static inline void uart_write_byte(USART_TypeDef *uart, uint8_t byte) {
   uart->TDR = byte;
-  while ((uart->ISR & BIT(6)) == 0) spin(1); // vik: changed to bit 6 instead of 7 (Trans. completed instead of shift reg. emptied)
+  while ((uart->ISR & BIT(7)) == 0) spin(1); // vik: changed to bit 6 instead of 7 (Trans. completed instead of shift reg. emptied)
 }
 static inline void uart_write_buf(USART_TypeDef *uart, char *buf, size_t len) {
   while (len-- > 0) uart_write_byte(uart, *(uint8_t *) buf++);
