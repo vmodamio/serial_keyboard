@@ -71,7 +71,7 @@ static struct serdev_device_driver typewrt_driver = {
  */
 static size_t typewrt_recv(struct serdev_device *serdev, const unsigned char *buffer, size_t size) {
 	struct typewrt *typewrt = serdev_device_get_drvdata(serdev);
-	printk("typewrt - Received last %ld  byte \"%d\"\n", size,  buffer[size-1]);
+	//printk("typewrt - Received last %ld  byte \"%d\"\n", size,  buffer[size-1]);
 	input_report_key(typewrt->dev, buffer[size-1] & TYPEWRT_KEY, buffer[size-1] & TYPEWRT_PRESS);
 	input_sync(typewrt->dev);
         return 	size;
@@ -133,7 +133,7 @@ static int typewrt_probe(struct serdev_device *serdev) {
 		return -status;
 	}
 
-	serdev_device_set_baudrate(serdev, 115200);
+	serdev_device_set_baudrate(serdev, 500000);
 	serdev_device_set_flow_control(serdev, false);
 	serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
 
