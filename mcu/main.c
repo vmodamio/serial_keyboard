@@ -153,7 +153,8 @@ int main(void) {
   set_all_rows(1);
   col_trigger_init();
 
-  uart_init(USART1, 115200);
+  //uart_init(USART1, 115200);
+  uart_init(USART1, 500000);
   //init_debouncer();
 
   scanning = 0;
