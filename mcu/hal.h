@@ -270,7 +270,7 @@ static inline void init_debouncer(void) {
 
 
 static inline void clock_init(void) {
-  FLASH->ACR |= FLASH_ACR_LATENCY_2WS | FLASH_ACR_ICEN | FLASH_ACR_DCEN;
+  FLASH->ACR |= FLASH_ACR_LATENCY_0WS | FLASH_ACR_ICEN | FLASH_ACR_DCEN;
 
   RCC->CR |= RCC_CR_HSION;
   while (!(RCC->CR & RCC_CR_HSIRDY)) spin(1);
