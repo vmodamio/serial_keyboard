@@ -168,7 +168,7 @@ int main(void) {
 
   set_triggers(1);
   //while (s_ticks < 10000) spin(1);
-  uart_write_buf(USART1, "Init ",5 );
+  //uart_write_buf(USART1, "Init ",5 );
   
   while (1) {
     while (scanning) {   // expires in 32ms because of TIM2
@@ -184,7 +184,7 @@ int main(void) {
 	                             gpio_read(COLS[k]) ;
 	           if (keyboard[keyn] == Hmask) {
 	               keyboard[keyn] = 0x00;
-		       keydown &= ~( 1<< keyn);
+		       keydown &= ~( 1ULL << keyn);
 	               scanning = keydown ? 1 : 0;
 		       setready = 1;
                        if (keycode[keyn]>>7) kbd_layer(); // process special KEY
@@ -193,7 +193,7 @@ int main(void) {
 	           }
 	           else if (keyboard[keyn] == Lmask) {
 	               keyboard[keyn] = 0xFF;
-		       keydown |= ( 1<< keyn);
+		       keydown |= ( 1ULL << keyn);
                        if (keycode[keyn]>>7) kbd_layer(); // process special KEY
 		       else uart_write_byte(USART1, keycode[keyn+keymod] + 128);
                        //uart_write_buf(USART1, "[x",2 );
@@ -209,8 +209,9 @@ int main(void) {
     if (setready) {
         set_all_rows(1);
         for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
-        spin(8);
+        //spin(8);
         set_triggers(1);
+        spin(4);
         //TIM2->CR1 &= ~(1<<0);    // Disable timer
 	setready = 0;
     }
