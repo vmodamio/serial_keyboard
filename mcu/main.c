@@ -182,7 +182,7 @@ int main(void) {
                    keyboard[keyn] = (keyboard[keyn] & Hmask) |
 	                             ((keyboard[keyn] <<1 ) & Lmask) | 
 	                             gpio_read(COLS[k]) ;
-	           if (keyboard[keyn] == Hmask) {
+	           if (keyboard[keyn] == Hmask) {   // key RELEASE
 	               keyboard[keyn] = 0x00;
 		       keydown &= ~( 1ULL << keyn);
 	               scanning = keydown ? 1 : 0;
@@ -191,7 +191,7 @@ int main(void) {
 		       else uart_write_byte(USART1, keycode[keyn+keymod] );
                        //uart_write_buf(USART1, "o] ",3 );
 	           }
-	           else if (keyboard[keyn] == Lmask) {
+	           else if (keyboard[keyn] == Lmask) {  // key PRESS
 	               keyboard[keyn] = 0xFF;
 		       keydown |= ( 1ULL << keyn);
                        if (keycode[keyn]>>7) kbd_layer(); // process special KEY
