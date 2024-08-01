@@ -44,7 +44,7 @@ static uint8_t keycode[256] = { \
 };
 
 
-uint32_t SystemCoreClock;  // Required by CMSIS. Holds system core cock value
+uint32_t SystemCoreClock;  // Required by CMSIS. Holds system core clock value
 void SystemInit(void) {    // Called automatically by startup code
   clock_init();            // Sets SystemCoreClock
   stop2_init();
@@ -63,6 +63,9 @@ static volatile uint8_t keymod; // holds the layer offset
 static volatile uint8_t keylock; // holds the key locks
 volatile uint8_t keyboard[NROWS*NCOLS]; // holds the status of the keyboard
 static volatile uint64_t keydown; // holds the key locks
+static volatile int col; 
+static volatile int row; 
+static volatile int kd; 
 
 //void TIM2_IRQHandler(void) {
 //   if (TIM2->SR & (1<<0)) {
@@ -159,9 +162,9 @@ int main(void) {
 
   scanning = 0;
   setready = 0;
+  keyn = 0;
   keymod = 0;
   keylock = 0;
-
   // Initialize the keyboard matrix
   for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = 0x00;  
   keydown = 0;
@@ -175,13 +178,13 @@ int main(void) {
        if (s_ticks > tick_init) {
 	   //set_all_rows(0); //already in the interrupt
            tick_init = s_ticks;
-           for (int m=0 ; m < NROWS ; m++) {
-	       gpio_write(ROWS[m], 1);
-	       for (int k=0; k < NCOLS ; k++) {
-	           keyn = NROWS*k +m;
+           for (row = 0 ; row < NROWS ; row++) {
+	       gpio_write(ROWS[row], 1);
+	       for (col = 0; col < NCOLS ; col++) {
+	           keyn = NROWS*col +row;
                    keyboard[keyn] = (keyboard[keyn] & Hmask) |
 	                             ((keyboard[keyn] <<1 ) & Lmask) | 
-	                             gpio_read(COLS[k]) ;
+	                             gpio_read(COLS[col]) ;
 	           if (keyboard[keyn] == Hmask) {   // key RELEASE
 	               keyboard[keyn] = 0x00;
 		       keydown &= ~( 1ULL << keyn);
@@ -199,7 +202,7 @@ int main(void) {
                        //uart_write_buf(USART1, "[x",2 );
 	           }
 	       }
-	       gpio_write(ROWS[m], 0);
+	       gpio_write(ROWS[row], 0);
            }
 	   
        }
@@ -208,10 +211,10 @@ int main(void) {
 
     if (setready) {
         set_all_rows(1);
-        for (int m=0; m<NROWS*NCOLS; m++) keyboard[m] = (keyboard[m]>>7) ? 0xFF: 0x00;  
+        for (kd = 0; kd < NROWS*NCOLS; kd++) keyboard[kd] = (keyboard[kd]>>7) ? 0xFF: 0x00;  
         //spin(8);
         set_triggers(1);
-        spin(4);
+        spin(10);
         //TIM2->CR1 &= ~(1<<0);    // Disable timer
 	setready = 0;
     }
