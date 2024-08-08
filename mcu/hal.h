@@ -134,10 +134,10 @@ static inline void gpio_output(uint16_t pin) {
 
 static inline void gpio_matrix_init(void) {
   for (int m=0; m< NCOLS; m++) {
-    gpio_init(COLS[m], GPIO_MODE_INPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_DOWN, 0);
+    gpio_init(COLS[m], GPIO_MODE_INPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_DOWN, 0);
   }
   for (int m=0; m< NROWS; m++) {
-  gpio_init(ROWS[m], GPIO_MODE_OUTPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE, 0);
+  gpio_init(ROWS[m], GPIO_MODE_OUTPUT, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE, 0);
   }
 }
 
@@ -193,25 +193,30 @@ static inline void set_row(int val) { // here incorporate the readout of the col
 
 static inline bool uart_init(USART_TypeDef *uart, unsigned long baud) {
   // https://www.st.com/resource/en/datasheet/stm32l432kc.pdf
-  uint8_t aftx = 7, afrx = 7;  // Alternate function
-  uint16_t rx = 0, tx = 0;     // pins
+  //uint8_t aftx = 7, afrx = 7;  // Alternate function
+  uint8_t aftx = 7;  // Alternate function
+  //uint16_t rx = 0, tx = 0;     // pins
+  uint16_t tx = 0;     // pins
   uint32_t freq = 0;           // Bus frequency. UART1 is on APB2, rest on APB1
 
   if (uart == USART1) {
     freq = APB2_FREQUENCY, RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    tx = PIN('A', 9), rx = PIN('A', 10);
+    //tx = PIN('A', 9), rx = PIN('A', 10);
+    tx = PIN('A', 9);
   } else if (uart == USART2) {
     freq = APB1_FREQUENCY, RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
-    tx = PIN('A', 2), rx = PIN('A', 15), afrx = 3;
+    //tx = PIN('A', 2), rx = PIN('A', 15), afrx = 3;
+    tx = PIN('A', 2);
   } else {
     return false;
   }
 
-  gpio_init(tx, GPIO_MODE_AF, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_MEDIUM, 0, aftx);
-  gpio_init(rx, GPIO_MODE_AF, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_MEDIUM, 0, afrx);
+  gpio_init(tx, GPIO_MODE_AF, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_HIGH, 0, aftx);
+  //gpio_init(rx, GPIO_MODE_AF, GPIO_OTYPE_PUSH_PULL, GPIO_SPEED_HIGH, 0, afrx);
   uart->CR1 = 0;                          // Disable this UART
   uart->BRR = freq / baud;                // Set baud rate
-  uart->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
+  //uart->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
+  uart->CR1 |= BIT(0) | BIT(3);  // Set UE, TE but not receive
   //uart->CR3 |= BIT(7);  // Set DMA Transmit
   //uart->CR3 |= BIT(8) | BIT(9);  // Set CTSE and RTSE, for RS-232
   return true;
@@ -325,7 +330,8 @@ static inline void stopkbd(void) {
   while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) spin(1);
 
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;  // re-enable USART2
-  USART1->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
+  //USART1->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
+  USART1->CR1 |= BIT(0) | BIT(3);  // Set UE, TE but not RE
   //RCC->APB1ENR1 |= (1<<0); // Enable clock for TIM2
   RCC->AHB2ENR |= 3;  // enable GPIO clocks for bit 0 and 1 (A and B banks)
   SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;        
