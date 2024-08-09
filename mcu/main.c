@@ -57,7 +57,8 @@ void SysTick_Handler(void) {       // SyStick IRQ handler, triggered every 1ms
 }
 
 static volatile uint8_t scanning;  
-static volatile uint8_t setready;  
+//static volatile uint8_t setready;  
+//static volatile uint8_t timeout;  
 static volatile uint8_t keyn; // holds the key that triggered
 static volatile uint8_t keymod; // holds the layer offset
 static volatile uint8_t keylock; // holds the key locks
@@ -70,9 +71,9 @@ static volatile int kd;
 //void TIM2_IRQHandler(void) {
 //   if (TIM2->SR & (1<<0)) {
 //     TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
-//     //scanning = 0;
+//     timeout = 1;
 //     //EXTI->IMR1 |= (1 << 0); // re-enable the EXTI interrupt, HERE: need to map to the coln EXTI
-//     TIM2->CR1 &= ~(1<<0);    // Disable timer
+//     //TIM2->CR1 &= ~(1<<0);    // Disable timer
 //   }
 //}
 
@@ -161,7 +162,7 @@ int main(void) {
   //init_debouncer();
 
   scanning = 0;
-  setready = 0;
+  //setready = 0;
   keyn = 0;
   keymod = 0;
   keylock = 0;
@@ -189,10 +190,11 @@ int main(void) {
 	               keyboard[keyn] = 0x00;
 		       keydown &= ~( 1ULL << keyn);
 	               //scanning = keydown ? 1 : 0;
-		       setready = 1;
+		       //setready = 1;
                        if (keycode[keyn]>>7) kbd_layer(); // process special KEY
 		       else uart_write_byte(USART1, keycode[keyn+keymod] );
                        //uart_write_buf(USART1, "o] ",3 );
+		       if (keydown == 0) break;
 	           }
 	           else if (keyboard[keyn] == Lmask) {  // key PRESS
 	               keyboard[keyn] = 0xFF;
@@ -209,18 +211,19 @@ int main(void) {
        else spin(1);
     }
 
-    if (setready) {
-        set_all_rows(1);
-        for (kd = 0; kd < NROWS*NCOLS; kd++) keyboard[kd] = (keyboard[kd]>>7) ? 0xFF: 0x00;  
-        //spin(8);
-        set_triggers(1);
-        spin(10);
-        //TIM2->CR1 &= ~(1<<0);    // Disable timer
-	setready = 0;
-    }
+    //if (setready) {
+    set_all_rows(1);
+    for (kd = 0; kd < NROWS*NCOLS; kd++) keyboard[kd] = (keyboard[kd]>>7) ? 0xFF: 0x00;  
+    //spin(8);
+    set_triggers(1);
+    //spin(10);
+    //TIM2->CR1 &= ~(1<<0);    // Disable timer
+    //setready = 0;
+    //}
 
-    if ((USART1->ISR & BIT(6)) == 0) spin(1);
-    else stopkbd();
+    while ((USART1->ISR & BIT(6)) == 0) spin(1);
+    scanning = 0;
+    stopkbd();
   }  
   return 0;
 }

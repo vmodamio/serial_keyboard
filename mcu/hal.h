@@ -329,7 +329,7 @@ static inline void stopkbd(void) {
   RCC->CFGR |= (RCC_CFGR_SW_HSI);
   while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) spin(1);
 
-  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;  // re-enable USART2
+  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;  // re-enable USART1
   //USART1->CR1 |= BIT(0) | BIT(2) | BIT(3);  // Set UE, RE, TE
   USART1->CR1 |= BIT(0) | BIT(3);  // Set UE, TE but not RE
   //RCC->APB1ENR1 |= (1<<0); // Enable clock for TIM2
