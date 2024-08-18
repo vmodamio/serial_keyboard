@@ -1,0 +1,30 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "serdev UART3";
+		compatible = "radxa,rockpis", "radxa,rock-s0";
+		category = "misc";
+		description = "Enable UART3";
+	};
+};
+
+&uart3 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3m1_xfer>;
+        type_dev: type-dev@0{
+                status = "okay";
+                compatible = "typewriter_keyboard";
+                pinctrl-names = "default";
+        };
+};
+
+&pwm5 {
+	status = "disabled";
+};
+
+&pwm6 {
+	status = "disabled";
+};
